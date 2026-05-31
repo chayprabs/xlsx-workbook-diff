@@ -121,6 +121,21 @@ export function DiffPlayground() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ApiResponse | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [beforeUrl, setBeforeUrl] = useState("");
+  const [afterUrl, setAfterUrl] = useState("");
+
+  const loadFromUrl = async (url: string, setter: (f: File | null) => void) => {
+    if (!url.trim()) return;
+    try {
+      const res = await fetch(url.trim());
+      if (!res.ok) throw new Error("fetch failed");
+      const blob = await res.blob();
+      const name = url.split("/").pop()?.split("?")[0] || "workbook.xlsx";
+      setter(new File([blob], name.endsWith(".xlsx") ? name : `${name}.xlsx`, { type: blob.type }));
+    } catch {
+      setError("Could not load workbook from URL.");
+    }
+  };
 
   const runDiff = useCallback(async () => {
     if (!before || !after) {
