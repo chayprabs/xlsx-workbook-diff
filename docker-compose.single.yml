@@ -1,3 +1,4 @@
+# All-in-one local stack (same as docker-compose.yml; alias for handoff template)
 services:
   worker:
     build:
@@ -6,7 +7,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - CORS_ORIGINS=http://localhost:3000,http://web:3000
+      - CORS_ORIGINS=http://localhost:3000
       - PUBLIC_WORKER_URL=http://localhost:3000/api
       - ARTIFACT_TTL_SECONDS=3600
     healthcheck:
@@ -14,8 +15,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 15s
-    mem_limit: 2g
 
   web:
     build:
@@ -27,7 +26,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=
       - API_PROXY_TARGET=http://worker:8080
     depends_on:
       worker:

@@ -25,8 +25,25 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "SheetDiff",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Any",
+    description: metadata.description,
+    url: "https://github.com/chayprabs/xlsx-workbook-diff",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  };
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col">
         <TopBar />
         <SeoBar />

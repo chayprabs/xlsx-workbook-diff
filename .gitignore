@@ -26,5 +26,15 @@ out/
 # Jobs
 /tmp/
 
+# Python / test caches
+.pytest_cache/
+__pycache__/
+*.egg-info/
+.venv/
+
+# Build artifacts
+apps/web/.next/
+*.tsbuildinfo
+
 # Local planning uploads (optional copies)
 uploads/

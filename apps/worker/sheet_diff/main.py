@@ -5,6 +5,8 @@ import logging
 import os
 from pathlib import Path
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -12,14 +14,21 @@ from fastapi.responses import FileResponse, JSONResponse
 from sheet_diff.engine import compare_workbooks
 from sheet_diff.models import DiffArtifacts, DiffOptions, DiffResponse, TolerancePreset
 from sheet_diff.reports import write_diff_workbook, write_html_report, write_json_report, write_summary_xlsx
-from sheet_diff.storage import MAX_FILE_BYTES, cleanup_job, new_job_dir
+from sheet_diff.storage import MAX_FILE_BYTES, ARTIFACT_TTL_SECONDS, cleanup_job, new_job_dir, purge_expired_jobs
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("sheet-diff")
 # Never log sheet contents
 logger.addFilter(lambda r: "cell" not in r.getMessage().lower() or "health" in r.getMessage().lower())
 
-app = FastAPI(title="SheetDiff Worker", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    purge_expired_jobs()
+    yield
+    purge_expired_jobs()
+
+
+app = FastAPI(title="SheetDiff Worker", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,7 +41,11 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "sheet-diff-worker"}
+    return {
+        "status": "ok",
+        "service": "sheet-diff-worker",
+        "artifactTtlSeconds": ARTIFACT_TTL_SECONDS,
+    }
 
 
 async def _save_upload(upload: UploadFile, dest: Path) -> None:
@@ -122,7 +135,9 @@ async def diff_endpoint(
         data["artifacts"]["diffWorkbookUrl"] = f"{base}/v1/artifacts/{job_id}/diff.xlsx"
         data["artifacts"]["htmlReportUrl"] = f"{base}/v1/artifacts/{job_id}/report.html"
         data["artifacts"]["jsonReportUrl"] = f"{base}/v1/artifacts/{job_id}/report.json"
+        data["artifacts"]["summaryWorkbookUrl"] = f"{base}/v1/artifacts/{job_id}/summary.xlsx"
         data["jobId"] = job_id
+        purge_expired_jobs()
         return JSONResponse(content=data)
     except HTTPException:
         cleanup_job(job_dir)
@@ -144,4 +159,11 @@ def get_artifact(job_id: str, filename: str):
         media = "text/html"
     elif safe.endswith(".json"):
         media = "application/json"
-    return FileResponse(path, media_type=media, filename=safe)
+    elif safe.endswith(".xlsx"):
+        media = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return FileResponse(
+        path,
+        media_type=media,
+        filename=safe,
+        headers={"Cache-Control": "private, no-store"},
+    )

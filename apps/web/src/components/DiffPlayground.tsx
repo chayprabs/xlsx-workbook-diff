@@ -40,6 +40,7 @@ interface ApiResponse {
     diffWorkbookUrl?: string;
     htmlReportUrl?: string;
     jsonReportUrl?: string;
+    summaryWorkbookUrl?: string;
   };
   jobId?: string;
 }
@@ -155,6 +156,14 @@ export function DiffPlayground() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [beforeUrl, setBeforeUrl] = useState("");
   const [afterUrl, setAfterUrl] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [absTol, setAbsTol] = useState("");
+  const [relTol, setRelTol] = useState("");
+  const [trimStrings, setTrimStrings] = useState(true);
+  const [caseFold, setCaseFold] = useState(false);
+  const [normalizeDates, setNormalizeDates] = useState(true);
+  const [resultTab, setResultTab] = useState<"changes" | "json">("changes");
+  const [rawJson, setRawJson] = useState<string | null>(null);
 
   const loadFromUrl = async (url: string, setter: (f: File | null) => void) => {
     if (!url.trim()) return;
@@ -182,22 +191,29 @@ export function DiffPlayground() {
       fd.append("before", before);
       fd.append("after", after);
       fd.append("tolerance_preset", preset);
+      fd.append("trim_strings", String(trimStrings));
+      fd.append("case_fold_strings", String(caseFold));
+      fd.append("normalize_dates", String(normalizeDates));
+      if (absTol.trim()) fd.append("absolute_tolerance", absTol.trim());
+      if (relTol.trim()) fd.append("relative_tolerance", relTol.trim());
       const res = await fetch(diffApiUrl, { method: "POST", body: fd });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { detail?: string }).detail || `Error ${res.status}`);
       }
       const json = (await res.json()) as ApiResponse;
+      setRawJson(JSON.stringify(json, null, 2));
       setData({
         ...json,
         result: normalizeResult(json.result),
       });
+      setResultTab("changes");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Diff failed");
     } finally {
       setLoading(false);
     }
-  }, [before, after, preset]);
+  }, [before, after, preset, absTol, relTol, trimStrings, caseFold, normalizeDates]);
 
   const loadSample = async (sample: (typeof SAMPLES)[0]) => {
     setError(null);
@@ -239,7 +255,55 @@ export function DiffPlayground() {
             {p.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-sm px-3 py-1.5 rounded-full border border-[var(--border)] bg-white text-[var(--muted)]"
+        >
+          {showAdvanced ? "Hide" : "Advanced"} options
+        </button>
       </div>
+
+      {showAdvanced && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-white border border-[var(--border)] rounded-xl text-sm">
+          <label className="flex flex-col gap-1">
+            <span className="text-[var(--muted)]">Absolute tolerance</span>
+            <input
+              type="number"
+              step="any"
+              placeholder="e.g. 0.001"
+              value={absTol}
+              onChange={(e) => setAbsTol(e.target.value)}
+              className="px-3 py-2 border border-[var(--border)] rounded-lg"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[var(--muted)]">Relative tolerance</span>
+            <input
+              type="number"
+              step="any"
+              placeholder="e.g. 0.01"
+              value={relTol}
+              onChange={(e) => setRelTol(e.target.value)}
+              className="px-3 py-2 border border-[var(--border)] rounded-lg"
+            />
+          </label>
+          <div className="flex flex-col gap-2 justify-center">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={trimStrings} onChange={(e) => setTrimStrings(e.target.checked)} />
+              Trim strings
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={caseFold} onChange={(e) => setCaseFold(e.target.checked)} />
+              Case-fold strings
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={normalizeDates} onChange={(e) => setNormalizeDates(e.target.checked)} />
+              Normalize dates
+            </label>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-4">
         <FileSlot label="Before workbook" file={before} onFile={setBefore} />
@@ -339,6 +403,15 @@ export function DiffPlayground() {
                 <Download className="w-4 h-4" /> JSON (CI)
               </a>
             )}
+            {artifacts?.summaryWorkbookUrl && (
+              <a
+                href={normalizeArtifactUrl(artifacts.summaryWorkbookUrl)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white border border-[var(--border)] rounded-lg hover:border-[var(--accent)]"
+                download
+              >
+                <Download className="w-4 h-4" /> Summary (.xlsx)
+              </a>
+            )}
             <button
               type="button"
               onClick={() => setDrawerOpen(!drawerOpen)}
@@ -348,10 +421,35 @@ export function DiffPlayground() {
             </button>
           </div>
 
-          <p className="text-sm font-medium">
-            {result.summary?.totalChanges ?? result.cells.length} total changes
-          </p>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-sm font-medium">
+              {result.summary?.totalChanges ?? result.cells.length} total changes
+            </p>
+            <div className="flex rounded-lg border border-[var(--border)] overflow-hidden text-sm">
+              <button
+                type="button"
+                onClick={() => setResultTab("changes")}
+                className={`px-4 py-1.5 ${resultTab === "changes" ? "bg-[var(--accent)] text-white" : "bg-white"}`}
+              >
+                Changes
+              </button>
+              <button
+                type="button"
+                onClick={() => setResultTab("json")}
+                className={`px-4 py-1.5 ${resultTab === "json" ? "bg-[var(--accent)] text-white" : "bg-white"}`}
+              >
+                Raw JSON
+              </button>
+            </div>
+          </div>
 
+          {resultTab === "json" && rawJson && (
+            <pre className="text-xs bg-white border border-[var(--border)] rounded-xl p-4 overflow-auto max-h-96">
+              {rawJson}
+            </pre>
+          )}
+
+          {resultTab === "changes" && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {Object.entries(result.summary?.bySheet ?? {}).map(([sheet, counts]) => (
               <div key={sheet} className="bg-white border border-[var(--border)] rounded-xl p-4 shadow-sm">
@@ -363,24 +461,36 @@ export function DiffPlayground() {
               </div>
             ))}
           </div>
+          )}
 
-          {drawerOpen && (
-            <aside className="bg-white border border-[var(--border)] rounded-xl p-4 text-sm">
-              <h3 className="font-medium mb-2">Structure</h3>
-              <pre className="overflow-auto text-xs bg-[#fafafa] p-3 rounded-lg">
-                {JSON.stringify(result.structure, null, 2)}
-              </pre>
-              {result.charts?.length > 0 && (
-                <>
-                  <h3 className="font-medium mt-4 mb-2">Charts</h3>
+          {resultTab === "changes" && drawerOpen && (
+            <aside className="bg-white border border-[var(--border)] rounded-xl p-4 text-sm space-y-4">
+              <div>
+                <h3 className="font-medium mb-2">Structure</h3>
+                <pre className="overflow-auto text-xs bg-[#fafafa] p-3 rounded-lg">
+                  {JSON.stringify(result.structure, null, 2)}
+                </pre>
+              </div>
+              {result.namedRanges && (
+                <div>
+                  <h3 className="font-medium mb-2">Named ranges</h3>
+                  <pre className="overflow-auto text-xs bg-[#fafafa] p-3 rounded-lg max-h-32">
+                    {JSON.stringify(result.namedRanges, null, 2)}
+                  </pre>
+                </div>
+              )}
+              {result.charts && result.charts.length > 0 && (
+                <div>
+                  <h3 className="font-medium mb-2">Charts</h3>
                   <pre className="overflow-auto text-xs bg-[#fafafa] p-3 rounded-lg max-h-48">
                     {JSON.stringify(result.charts, null, 2)}
                   </pre>
-                </>
+                </div>
               )}
             </aside>
           )}
 
+          {resultTab === "changes" && (
           <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-[#f5f5f5]">
@@ -416,6 +526,7 @@ export function DiffPlayground() {
               </p>
             )}
           </div>
+          )}
         </div>
       )}
     </div>

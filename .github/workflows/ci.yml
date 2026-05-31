@@ -42,6 +42,8 @@ jobs:
         run: pnpm --filter @sheet-diff/web typecheck
       - name: Lint web
         run: pnpm --filter @sheet-diff/web lint
+      - name: Test web
+        run: pnpm --filter @sheet-diff/web test
       - name: Build web
         run: pnpm --filter @sheet-diff/web build
         env:
