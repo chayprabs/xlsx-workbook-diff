@@ -43,9 +43,11 @@ def diff_sheet_structure(before: dict[str, Any], after: dict[str, Any]) -> dict[
 def diff_named_ranges(wb_before: Workbook, wb_after: Workbook) -> dict[str, Any]:
     def collect(wb: Workbook) -> dict[str, str]:
         out: dict[str, str] = {}
-        for dn in wb.defined_names.definedName:
+        for name, dn in wb.defined_names.items():
             if isinstance(dn, DefinedName):
-                out[dn.name] = str(dn.attr_text or dn.value or "")
+                out[name] = str(dn.attr_text or getattr(dn, "value", "") or "")
+            else:
+                out[name] = str(dn)
         return out
 
     b = collect(wb_before)

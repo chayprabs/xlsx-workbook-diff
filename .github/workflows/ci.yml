@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Generate samples
+        run: python3 ../../samples/generate_samples.py
+        working-directory: apps/worker
+      - name: Pytest
+        run: python3 -m pytest tests/ -v
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - name: Install
+        run: pnpm install
+      - name: Build shared-types
+        run: pnpm --filter @sheet-diff/shared-types build
+      - name: Typecheck web
+        run: pnpm --filter @sheet-diff/web typecheck
+      - name: Lint web
+        run: pnpm --filter @sheet-diff/web lint
+      - name: Build web
+        run: pnpm --filter @sheet-diff/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8080
+
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose
+        run: docker compose config
