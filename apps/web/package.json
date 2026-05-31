@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "node ../../scripts/copy-samples.mjs",
+    "prebuild": "node ../../scripts/copy-samples.mjs",
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",

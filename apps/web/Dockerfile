@@ -15,6 +15,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN python3 samples/generate_samples.py && node scripts/copy-samples.mjs
 RUN pnpm --filter @sheet-diff/shared-types build
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @sheet-diff/web build

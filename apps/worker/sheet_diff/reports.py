@@ -16,9 +16,21 @@ KIND_COLORS = {
     "formula": "#90CAF9",
     "style": "#CE93D8",
     "value+formula": "#FFAB91",
+    "formula+style": "#B39DDB",
+    "value+style": "#FFCC80",
+    "value+formula+style": "#FFAB91",
     "added": "#A5D6A7",
     "removed": "#EF9A9A",
 }
+
+
+def _fill_for_kind(kind: str, fills: dict) -> PatternFill:
+    if kind in fills:
+        return fills[kind]
+    for key in ("formula", "style", "value", "added", "removed"):
+        if key in kind and key in fills:
+            return fills[key]
+    return fills["value"]
 
 
 def write_diff_workbook(result: DiffResult, before_path: Path, after_path: Path, out_path: Path) -> None:
@@ -33,7 +45,7 @@ def write_diff_workbook(result: DiffResult, before_path: Path, after_path: Path,
         ws = wb[change.sheet]
         try:
             cell = ws[change.cell]
-            fill = fills.get(change.kind, fills["value"])
+            fill = _fill_for_kind(change.kind, fills)
             cell.fill = fill
         except (ValueError, KeyError):
             pass

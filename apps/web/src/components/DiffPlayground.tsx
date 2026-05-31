@@ -44,13 +44,45 @@ interface ApiResponse {
   jobId?: string;
 }
 
+function formatCellDisplay(v: unknown): string {
+  if (v == null) return "";
+  if (typeof v === "object" && v !== null) {
+    const o = v as { value?: unknown; formula?: unknown };
+    if (o.formula != null && String(o.formula) !== "") return String(o.formula);
+    if (o.value != null) return String(o.value);
+    return JSON.stringify(v).slice(0, 80);
+  }
+  return String(v);
+}
+
+function normalizeArtifactUrl(url: string): string {
+  if (API_BASE) return url;
+  try {
+    const u = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+    if (u.pathname.startsWith("/v1/artifacts/")) {
+      return `/api${u.pathname}`;
+    }
+  } catch {
+    /* ignore */
+  }
+  return url;
+}
+
 function normalizeResult(raw: ApiResult): DiffResult & { summary: { totalChanges: number; bySheet: Record<string, { value: number; formula: number; style: number; total: number }> } } {
   const s = raw.summary;
   const bySheet = s?.bySheet ?? s?.by_sheet ?? {};
+  const rawCharts = raw.charts ?? [];
   return {
     ...raw,
     cells: raw.cells ?? [],
-    charts: raw.charts ?? [],
+    charts: rawCharts.map((c) => {
+      const chart = c as { chartId?: string; chart_id?: string; sheet: string; diff: Record<string, unknown> };
+      return {
+        sheet: chart.sheet,
+        chartId: chart.chartId ?? chart.chart_id ?? "",
+        diff: chart.diff,
+      };
+    }),
     structure: raw.structure ?? { sheets: { added: [], removed: [], renamed: [], reordered: false } },
     namedRanges:
       (raw as { namedRanges?: DiffResult["namedRanges"]; named_ranges?: DiffResult["namedRanges"] })
@@ -174,6 +206,9 @@ export function DiffPlayground() {
         fetch(sample.before),
         fetch(sample.after),
       ]);
+      if (!bRes.ok || !aRes.ok) {
+        throw new Error("Could not load sample files.");
+      }
       const bBlob = await bRes.blob();
       const aBlob = await aRes.blob();
       setBefore(new File([bBlob], sample.before.split("/").pop()!, { type: bBlob.type }));
@@ -278,7 +313,7 @@ export function DiffPlayground() {
           <div className="flex flex-wrap gap-3">
             {artifacts?.diffWorkbookUrl && (
               <a
-                href={artifacts.diffWorkbookUrl}
+                href={normalizeArtifactUrl(artifacts.diffWorkbookUrl)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white border border-[var(--border)] rounded-lg hover:border-[var(--accent)]"
                 download
               >
@@ -287,7 +322,7 @@ export function DiffPlayground() {
             )}
             {artifacts?.htmlReportUrl && (
               <a
-                href={artifacts.htmlReportUrl}
+                href={normalizeArtifactUrl(artifacts.htmlReportUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white border border-[var(--border)] rounded-lg hover:border-[var(--accent)]"
@@ -297,7 +332,7 @@ export function DiffPlayground() {
             )}
             {artifacts?.jsonReportUrl && (
               <a
-                href={artifacts.jsonReportUrl}
+                href={normalizeArtifactUrl(artifacts.jsonReportUrl)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white border border-[var(--border)] rounded-lg hover:border-[var(--accent)]"
                 download
               >
@@ -366,10 +401,10 @@ export function DiffPlayground() {
                       <span className="px-2 py-0.5 rounded text-xs bg-[#f0f0f0]">{c.kind}</span>
                     </td>
                     <td className="p-2 hidden md:table-cell truncate max-w-[120px] text-[var(--muted)]">
-                      {String(c.before ?? "").slice(0, 80)}
+                      {formatCellDisplay(c.before).slice(0, 80)}
                     </td>
                     <td className="p-2 hidden md:table-cell truncate max-w-[120px] text-[var(--muted)]">
-                      {String(c.after ?? "").slice(0, 80)}
+                      {formatCellDisplay(c.after).slice(0, 80)}
                     </td>
                   </tr>
                 ))}

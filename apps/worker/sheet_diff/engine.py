@@ -62,14 +62,12 @@ def compare_workbooks(
     def bump(sheet: str, kind: str):
         by_sheet.setdefault(sheet, {"value": 0, "formula": 0, "style": 0, "total": 0})
         by_sheet[sheet]["total"] += 1
-        if kind == "value+formula":
+        parts = kind.split("+")
+        if any(p in parts for p in ("value", "added", "removed")):
             by_sheet[sheet]["value"] += 1
+        if "formula" in parts:
             by_sheet[sheet]["formula"] += 1
-        elif kind in ("value", "added", "removed"):
-            by_sheet[sheet]["value"] += 1
-        elif kind == "formula":
-            by_sheet[sheet]["formula"] += 1
-        elif kind == "style":
+        if "style" in parts:
             by_sheet[sheet]["style"] += 1
 
     all_sheets = sorted(set(wb_b.sheetnames) | set(wb_a.sheetnames))
@@ -139,15 +137,20 @@ def compare_workbooks(
             kinds: list[str] = []
             if f_kind:
                 kinds.append(f_kind)
-            elif not val_eq and (b_val is not None or a_val is not None or cb.value != ca.value):
-                kinds.append("value")
+            elif not val_eq:
+                if b_val is None and a_val is not None and cb.value is None:
+                    kinds.append("added")
+                elif a_val is None and b_val is not None and ca.value is None:
+                    kinds.append("removed")
+                elif b_val is not None or a_val is not None or cb.value != ca.value:
+                    kinds.append("value")
             if sd:
                 kinds.append("style")
 
             if not kinds:
                 continue
 
-            kind = kinds[0] if len(kinds) == 1 else "value+formula" if "formula" in kinds else "+".join(dict.fromkeys(kinds))
+            kind = "+".join(dict.fromkeys(kinds)) if len(kinds) > 1 else kinds[0]
             change = CellChange(
                 sheet=sheet,
                 cell=coord,

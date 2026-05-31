@@ -3,7 +3,9 @@ import type { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   const base =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "https://github.com/chayprabs/xlsx-workbook-diff";
+    (process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "https://github.com/chayprabs/xlsx-workbook-diff");
   const routes = [
     "",
     "/excel-diff",
