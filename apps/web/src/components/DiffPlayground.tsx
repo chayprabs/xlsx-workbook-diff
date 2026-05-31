@@ -211,6 +211,41 @@ export function DiffPlayground() {
         <FileSlot label="After workbook" file={after} onFile={setAfter} />
       </div>
 
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="flex gap-2">
+          <input
+            type="url"
+            placeholder="Paste before workbook URL (.xlsx)"
+            value={beforeUrl}
+            onChange={(e) => setBeforeUrl(e.target.value)}
+            className="flex-1 text-sm px-3 py-2 border border-[var(--border)] rounded-lg bg-white"
+          />
+          <button
+            type="button"
+            onClick={() => loadFromUrl(beforeUrl, setBefore)}
+            className="text-sm px-3 py-2 border border-[var(--border)] rounded-lg bg-white hover:border-[var(--accent)]"
+          >
+            Load
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            placeholder="Paste after workbook URL (.xlsx)"
+            value={afterUrl}
+            onChange={(e) => setAfterUrl(e.target.value)}
+            className="flex-1 text-sm px-3 py-2 border border-[var(--border)] rounded-lg bg-white"
+          />
+          <button
+            type="button"
+            onClick={() => loadFromUrl(afterUrl, setAfter)}
+            className="text-sm px-3 py-2 border border-[var(--border)] rounded-lg bg-white hover:border-[var(--accent)]"
+          >
+            Load
+          </button>
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-3 items-center">
         <button
           type="button"
