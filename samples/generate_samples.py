@@ -37,16 +37,28 @@ def invoice_pair():
 
 
 def pricing_pair():
-    for label, mult in [("before", 1.0), ("after", 1.05)]:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Pricing"
-        ws["A1"] = "SKU"
-        ws["B1"] = "Price"
-        for i, sku in enumerate(["A1", "B2", "C3"], start=2):
-            ws[f"A{i}"] = sku
-            ws[f"B{i}"] = round(10.0 * i * mult, 4)
-        wb.save(OUT / f"pricing_{label}.xlsx")
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Pricing"
+    ws["A1"] = "SKU"
+    ws["B1"] = "Price"
+    for i, sku in enumerate(["A1", "B2", "C3"], start=2):
+        ws[f"A{i}"] = sku
+        ws[f"B{i}"] = round(10.0 * i * 1.0, 4)
+    wb.save(OUT / "pricing_before.xlsx")
+
+    wb2 = Workbook()
+    ws = wb2.active
+    ws.title = "Pricing"
+    ws["A1"] = "SKU"
+    ws["B1"] = "Price"
+    for i, sku in enumerate(["A1", "B2", "C3"], start=2):
+        ws[f"A{i}"] = sku
+        ws[f"B{i}"] = round(10.0 * i * 1.05, 4)
+    summary = wb2.create_sheet("Summary")
+    summary["A1"] = "Notes"
+    summary["B1"] = "M2 pricing"
+    wb2.save(OUT / "pricing_after.xlsx")
 
 
 def financial_pair():

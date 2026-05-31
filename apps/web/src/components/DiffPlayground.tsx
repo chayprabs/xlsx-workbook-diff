@@ -4,7 +4,8 @@ import { useCallback, useState } from "react";
 import { Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import type { DiffResult, TolerancePreset } from "@sheet-diff/shared-types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+const diffApiUrl = API_BASE ? `${API_BASE}/v1/diff` : "/api/v1/diff";
 
 const SAMPLES = [
   { id: "invoice", label: "Invoice (before/after)", before: "/samples/invoice_before.xlsx", after: "/samples/invoice_after.xlsx" },
@@ -51,9 +52,19 @@ function normalizeResult(raw: ApiResult): DiffResult & { summary: { totalChanges
     cells: raw.cells ?? [],
     charts: raw.charts ?? [],
     structure: raw.structure ?? { sheets: { added: [], removed: [], renamed: [], reordered: false } },
-    namedRanges: { added: [], removed: [], changed: [] },
-    hidden: { rows: {}, cols: {}, sheets: { added: [], removed: [] } },
-    tables: { added: [], removed: [], changed: [] },
+    namedRanges:
+      (raw as { namedRanges?: DiffResult["namedRanges"]; named_ranges?: DiffResult["namedRanges"] })
+        .namedRanges ??
+      (raw as { named_ranges?: DiffResult["namedRanges"] }).named_ranges ??
+      { added: [], removed: [], changed: [] },
+    hidden: (raw as { hidden?: DiffResult["hidden"] }).hidden ?? {
+      rows: {},
+      cols: {},
+      sheets: { added: [], removed: [] },
+    },
+    tables:
+      (raw as { tables?: DiffResult["tables"] }).tables ??
+      { added: [], removed: [], changed: [] },
     summary: {
       totalChanges: s?.totalChanges ?? s?.total_changes ?? raw.cells?.length ?? 0,
       bySheet,
@@ -124,7 +135,7 @@ export function DiffPlayground() {
       fd.append("before", before);
       fd.append("after", after);
       fd.append("tolerance_preset", preset);
-      const res = await fetch(`${API_BASE}/v1/diff`, { method: "POST", body: fd });
+      const res = await fetch(diffApiUrl, { method: "POST", body: fd });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { detail?: string }).detail || `Error ${res.status}`);

@@ -26,10 +26,15 @@ def parse_chart_xml(xml_bytes: bytes) -> dict[str, Any]:
         if root.find(f".//c:{tag}", NS) is not None:
             chart_type = tag
             break
-    title = _text(root.find(".//c:title//c:v", NS))
+    title_el = root.find(".//c:title//a:t", NS) or root.find(".//c:title//c:v", NS)
+    title = _text(title_el)
     series = []
     for ser in root.findall(".//c:ser", NS):
-        name = _text(ser.find(".//c:v", NS))
+        f_el = ser.find(".//c:strRef/c:f", NS)
+        if f_el is not None and f_el.text:
+            name = f_el.text.strip()
+        else:
+            name = _text(ser.find(".//c:v", NS))
         series.append({"name": name})
     return {"chartType": chart_type, "title": title, "series": series}
 

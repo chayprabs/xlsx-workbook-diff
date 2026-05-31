@@ -9,6 +9,10 @@ COPY packages/shared-types/package.json ./packages/shared-types/
 RUN pnpm install --frozen-lockfile 2>/dev/null || pnpm install
 
 FROM base AS builder
+ARG NEXT_PUBLIC_API_URL=
+ARG NEXT_PUBLIC_SITE_URL=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm --filter @sheet-diff/shared-types build

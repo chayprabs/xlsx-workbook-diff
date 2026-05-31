@@ -62,7 +62,10 @@ def compare_workbooks(
     def bump(sheet: str, kind: str):
         by_sheet.setdefault(sheet, {"value": 0, "formula": 0, "style": 0, "total": 0})
         by_sheet[sheet]["total"] += 1
-        if kind in ("value", "value+formula", "added", "removed"):
+        if kind == "value+formula":
+            by_sheet[sheet]["value"] += 1
+            by_sheet[sheet]["formula"] += 1
+        elif kind in ("value", "added", "removed"):
             by_sheet[sheet]["value"] += 1
         elif kind == "formula":
             by_sheet[sheet]["formula"] += 1
@@ -74,6 +77,8 @@ def compare_workbooks(
         if sheet not in wb_b.sheetnames:
             ws_a = wb_a[sheet]
             for cell in _iter_cells(ws_a):
+                if cell.value is None and cell.data_type != "f":
+                    continue
                 cells.append(
                     CellChange(
                         sheet=sheet,
@@ -87,6 +92,8 @@ def compare_workbooks(
         if sheet not in wb_a.sheetnames:
             ws_b = wb_b[sheet]
             for cell in _iter_cells(ws_b):
+                if cell.value is None and cell.data_type != "f":
+                    continue
                 cells.append(
                     CellChange(
                         sheet=sheet,

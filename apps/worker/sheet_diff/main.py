@@ -91,7 +91,16 @@ async def diff_endpoint(
             case_fold_strings=case_fold_strings,
             normalize_dates=normalize_dates,
         )
-        result = compare_workbooks(before_path, after_path, opts)
+        try:
+            result = compare_workbooks(before_path, after_path, opts)
+        except Exception as exc:
+            if "400_XLSX_INVALID" in str(exc):
+                raise
+            from openpyxl.utils.exceptions import InvalidFileException
+
+            if isinstance(exc, (InvalidFileException, ValueError, KeyError)):
+                raise HTTPException(status_code=400, detail="400_XLSX_INVALID") from exc
+            raise
 
         diff_wb = job_dir / "diff.xlsx"
         html_path = job_dir / "report.html"

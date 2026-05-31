@@ -60,7 +60,7 @@ def classify_formula_change(
         return None
     f_changed = normalize_formula(before_formula) != normalize_formula(after_formula)
     if f_changed:
-        if value_equal:
+        if value_equal and before_value is not None and after_value is not None:
             return "formula"
         return "value+formula"
     if not value_equal and (b_has or a_has):

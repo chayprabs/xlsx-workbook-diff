@@ -52,7 +52,7 @@ def write_html_report(result: DiffResult, out_path: Path) -> None:
       "section{background:#fff;padding:1rem;margin:1rem 0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)}",
       "table{border-collapse:collapse;width:100%}th,td{border:1px solid #e0e0e0;padding:.5rem;text-align:left}",
       ".kind-value{background:#FFE082}.kind-formula{background:#90CAF9}.kind-style{background:#CE93D8}",
-      ".kind-added{background:#A5D6A7}.kind-removed{background:#EF9A9A}</style></head><body>",
+      ".kind-value\\+formula{background:#FFAB91}.kind-added{background:#A5D6A7}.kind-removed{background:#EF9A9A}</style></head><body>",
       "<h1>SheetDiff HTML Report</h1>",
       f"<p>Total changes: {result.summary.total_changes}</p>",
   ]
@@ -70,6 +70,12 @@ def write_html_report(result: DiffResult, out_path: Path) -> None:
       parts.append("<section><h2>Chart changes</h2><pre>")
       parts.append(escape(json.dumps([c.model_dump() for c in result.charts], indent=2)[:8000]))
       parts.append("</pre></section>")
+  parts.append("<section><h2>Structure</h2><pre>")
+  parts.append(escape(json.dumps(result.structure.model_dump(), indent=2)[:4000]))
+  parts.append("</pre></section>")
+  parts.append("<section><h2>Named ranges</h2><pre>")
+  parts.append(escape(json.dumps(result.named_ranges.model_dump(), indent=2)[:4000]))
+  parts.append("</pre></section>")
   parts.append("</body></html>")
   out_path.write_text("\n".join(parts), encoding="utf-8")
 
