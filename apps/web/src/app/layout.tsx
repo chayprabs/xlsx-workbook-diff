@@ -49,9 +49,10 @@ export default function RootLayout({
         <SeoBar />
         <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6">{children}</main>
         <footer className="border-t border-[var(--border)] py-6 text-center text-sm text-[var(--muted)]">
-          <nav className="flex justify-center gap-6">
+          <nav className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <a href="/privacy">Privacy Policy</a>
             <a href="/terms">Terms &amp; Conditions</a>
+            <a href="https://github.com/chayprabs/xlsx-workbook-diff/blob/main/LICENSE">License (AGPL-3.0)</a>
           </nav>
           <p className="mt-3">© {new Date().getFullYear()} SheetDiff · AGPL-3.0</p>
         </footer>

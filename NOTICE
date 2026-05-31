@@ -1,0 +1,9 @@
+SheetDiff (xlsx-workbook-diff)
+Copyright (C) 2026 Chaitanya Prabuddha
+
+This product includes software licensed under the GNU Affero General Public
+License v3.0. See the LICENSE file for the full license text.
+
+Third-party components include openpyxl, lxml, formulas, FastAPI, Next.js, and
+other dependencies listed in apps/worker/requirements.txt and package.json.
+Each is subject to its own license.

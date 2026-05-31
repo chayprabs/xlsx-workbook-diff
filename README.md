@@ -103,14 +103,16 @@ These paths serve unique metadata and redirect to the home tool:
 
 - `/excel-diff`, `/xlsx-compare`, `/spreadsheet-diff-online`, `/excel-formula-diff`, `/excel-cell-compare`
 
-## Privacy
+## Privacy & legal
 
-- No sheet cell contents in application logs.
-- Ephemeral storage with TTL; see [Privacy Policy](apps/web/src/app/privacy/page.tsx) on the deployed site.
+- [Privacy Policy](https://github.com/chayprabs/xlsx-workbook-diff/blob/main/apps/web/src/app/privacy/page.tsx) (on site: `/privacy`)
+- [Terms & Conditions](https://github.com/chayprabs/xlsx-workbook-diff/blob/main/apps/web/src/app/terms/page.tsx) (on site: `/terms`)
+- [LEGAL.md](LEGAL.md) — index of legal documents
+- Ephemeral upload storage with TTL; no intentional logging of cell contents
 
 ## License
 
-[AGPL-3.0](LICENSE) — Chaitanya Prabuddha
+Copyright (C) 2026 Chaitanya Prabuddha. Licensed under [GNU AGPL-3.0](LICENSE). See [NOTICE](NOTICE).
 
 ## Links
 
