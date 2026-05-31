@@ -1,0 +1,29 @@
+services:
+  worker:
+    build:
+      context: ./apps/worker
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - CORS_ORIGINS=http://localhost:3000,http://web:3000
+      - PUBLIC_WORKER_URL=http://localhost:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 2g
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      worker:
+        condition: service_healthy

@@ -1,0 +1,19 @@
+{
+  "name": "xlsx-workbook-diff",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compare Excel XLSX workbooks online at cell, formula, style, chart, named-range and sheet-structure level with tolerance settings.",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "dev": "pnpm --parallel -r dev"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
