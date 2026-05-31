@@ -1,16 +1,8 @@
 import type { NextConfig } from "next";
 
+/** API proxy is handled at runtime by `src/app/api/[...path]/route.ts` (reads API_PROXY_TARGET). */
 const nextConfig: NextConfig = {
   output: "standalone",
-  async rewrites() {
-    const api =
-      process.env.API_PROXY_TARGET ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:8080";
-    return [
-      { source: "/api/:path*", destination: `${api}/:path*` },
-    ];
-  },
 };
 
 export default nextConfig;

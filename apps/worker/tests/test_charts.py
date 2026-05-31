@@ -35,7 +35,6 @@ def test_chart_sheet_mapping():
 def test_formula_only_kind():
     before = SAMPLES / "formula_only_before.xlsx"
     after = SAMPLES / "formula_only_after.xlsx"
-    if not before.exists():
-        return
+    assert before.exists() and after.exists(), "formula_only samples required"
     result = compare_workbooks(before, after, DiffOptions())
     assert any(c.kind == "formula" for c in result.cells)
