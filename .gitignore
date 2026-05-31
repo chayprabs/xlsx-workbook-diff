@@ -11,6 +11,7 @@ venv/
 .next/
 dist/
 out/
+*.tsbuildinfo
 *.egg-info/
 
 # Env
